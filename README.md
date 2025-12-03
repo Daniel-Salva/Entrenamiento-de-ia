@@ -1,37 +1,81 @@
-# Clasificación de imágenes (perros y gatos)
+# <img src="./LogotipoV2-Simple.png" alt="Logotipo" width="56" height="56" /> Entrenamiento-de-ia
 
-Este código fuente sirve como apoyo para el video de creación de un clasificador de perros y gatos usando Python y Tensorflow, del canal de YouTube [Ringa Tech](https://youtube.com/RingaTech)
+![Author](https://img.shields.io/badge/Author-Daniel--Salva-blue?style=for-the-badge&logo=github) ![Language](https://img.shields.io/badge/Languages-Jupyter%20Notebook-orange?style=for-the-badge) ![License](https://img.shields.io/badge/License-MIT-lightgrey?style=for-the-badge)
 
-Este código representa el sitio web, una vez que se crea y entrena el modelo de inteligencia artificial con Python y Tensorflow, el cual es exportado a los archivos "json" y "bin".
-Puede utilizarse en el celular, solo apunta la cámara al perro o gato que quieres clasificar (puede ser una imagen de la computadora, una foto, o uno de verdad), lo hace todo en el explorador utilizando Tensorflow.js.
+¡Bienvenido! Esta es una demo de un modelo de IA que se ejecuta en el navegador (TensorFlow.js) y viene con un notebook de Google Colab para experimentar. El README está diseñado para ser claro, visual y con tu nombre visible como autor.
 
-## Cómo utilizarlo
+## 🚀 Resumen rápido
+- index.html — Interfaz web que carga el modelo y hace inferencia en el cliente.  
+- model.json — Manifiesto del modelo (formato TF.js).  
+- group1-shard1of2.bin, group1-shard2of2.bin — Pesos del modelo (shards).  
+- Te_damos_la_bienvenida_a_Colab.ipynb — Notebook para abrir en Google Colab.  
+- LogotipoV2-Simple.png, favicon-* — Assets visuales.
 
-### Descargar el repositorio
-Descarga el repositorio donde gustes en tu computadora
+## ▶️ Cómo ejecutar (local)
+1. Clona el repositorio:
+   ```
+   git clone https://github.com/Daniel-Salva/Entrenamiento-de-ia.git
+   ```
+2. Entra al directorio:
+   ```
+   cd Entrenamiento-de-ia
+   ```
+3. Sirve los archivos estáticos (ejemplo con Python):
+   ```
+   python -m http.server 8000
+   ```
+4. Abre en tu navegador:
+   ```
+   http://localhost:8000/index.html
+   ```
 
-### Inicia un servidor en la carpeta
-Este proyecto utiliza un modelo de Tensorflow.js, el cual para cargarse requiere que el acceso sea por medio de http/https.
-Para eso puedes usar cualquier servidor, pero aquí hay una forma de hacerlo:
-- Descarga Python en tu computadora
-- Abre una línea de comandos o terminal
-- Navega hasta la carpeta donde descargaste el repositorio
-- Ejecuta el comando `python -m http.server 8000`
-- Abre un explorador y ve a http://localhost:8000
+> Por seguridad del navegador, sirve por HTTP (no abras index.html con file://), así evitarás errores al cargar model.json y los .bin.
 
-### Utilizarlo en un celular
-Si quieres abrirlo en tu celular, no se puede solo poner la IP local de tu computadora y el puerto, ya que para usar la cámara se requiere HTTPS. Puedes hacer un túnel de HTTPS siguiendo los siguientes pasos
-- Descarga ngrok en tu computadora, y descomprímelo
-- Abre una línea de comandos o terminal
-- Navega hasta la carpeta donde descargaste ngrok
-- Ejecuta el comando `ngrok http 8000`
-- Es importante tener ambos activos: El servidor de python, y el túnel de ngrok
-- En la línea de comandos aparecerá un enlace HTTPS. Puedes entrar ahí con tu celular, no importa si no estás en la red local.
-- El túnel expira después de 2 horas creo, en dado caso solo reinicias ngrok
-- Abre un explorador en tu celular y ve al enlace HTTPS indicado
+## 📘 Abrir el notebook
+- Haz clic en `Te_damos_la_bienvenida_a_Colab.ipynb` en GitHub y selecciona "Open in Colab", o súbelo a Colab manualmente.
 
-### Uso
-Puedes dar clic en el botón de "Cambiar camara" para utilizar la cámara delantera o trasera del celular. Solo apunta la cámara a un perro o gato, y abajo te aparecerá la predicción. Tampoco es el clasificador del futuro entonces si no clasifica perfecto, oops.
+## 🌐 Despliegue en GitHub Pages
+Activa GitHub Pages en la configuración del repo (branch: main, folder: /root). La URL será:
+```
+https://Daniel-Salva.github.io/Entrenamiento-de-ia/index.html
+```
 
-## Problemas
-Si tienes un problema, regístralo aquí o déjame un comentario en el video de Youtube. Asegúrate de primero revisar la consola de desarrollador de tu explorador para ver si puedes identificar el problema.
+## 🔧 Notas técnicas
+- `model.json` debe poder acceder a los shards por rutas relativas (p. ej. `group1-shard1of2.bin`).
+- Si reexportas el modelo con `tensorflowjs_converter`, se generarán `model.json` y los .bin.
+
+## ✨ Tu nombre en la documentación y en la demo
+Ya incluí un badge de autor en la cabecera para que tu nombre aparezca en el README. Si quieres que tu nombre también aparezca dentro de la demo (index.html), añade este pequeño snippet dentro del body de `index.html` (por ejemplo justo dentro del contenedor principal) y el CSS al head o a tu archivo CSS:
+
+HTML (añadir donde quieras mostrar tu nombre):
+```html
+<div id="owner-badge" class="owner-badge">Daniel-Salva</div>
+```
+
+CSS (añadir en <style> o css):
+```css
+.owner-badge {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(0,0,0,0.65);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+  font-size: 13px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  z-index: 9999;
+}
+```
+
+Con eso tu nombre estará visible en cada página de la demo como un badge discreto.
+
+## ✅ Buenas prácticas recomendadas
+- Añadir `LICENSE` (recomiendo MIT si quieres apertura).  
+- Considerar Git LFS si los .bin son grandes.  
+- Añadir `CONTRIBUTING.md` si esperas colaboraciones.
+
+## 🤝 Créditos y contacto
+- Autor: **Daniel-Salva** — https://github.com/Daniel-Salva  
+- Si quieres, puedo crear un PR que reemplace el README actual por este (o añadir además docs/DOCUMENTATION.md). Dime si quieres que lo haga y en qué rama prefieres el cambio.
