@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ID Scanner - Rodrigo</title>
+
+    <!-- Bootstrap 5 Dark Theme -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #121212;
+            color: #e0e0e0;
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-custom {
+            background-color: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid #333;
+            margin-bottom: 20px;
+        }
+
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* espejo */
+        }
+
+        .status-badge {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        #resultado {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            min-height: 60px;
+        }
+
+        .btn-custom {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        canvas {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="card-custom text-center">
+        <h2 class="mb-1">Scanner de Identidad</h2>
+        <p class="text-secondary mb-4">Sistema de acceso biométrico</p>
+
+        <!-- Video -->
+        <div class="video-container">
+            <video id="video" playsinline autoplay muted></video>
+            <div class="status-badge">
+                <div id="status-dot" class="status-dot"></div>
+                <span id="status-text">Iniciando...</span>
+            </div>
+        </div>
+
+        <!-- CANVAS necesarios -->
+        <canvas id="canvas" width="400" height="400"></canvas>
+        <canvas id="otrocanvas" width="100" height="100"></canvas>
+
+        <!-- Resultado -->
+        <div id="resultado" class="text-white">Cargando IA...</div>
+
+        <div class="progress mb-4" style="height: 6px; background: #333;">
+            <div id="barra-confianza" class="progress-bar" role="progressbar" style="width: 0%"></div>
+        </div>
+
+        <button class="btn btn-custom btn-primary" onclick="cambiarCamara()">🔄 Cambiar Cámara</button>
+
+        <div class="mt-4 text-secondary" style="font-size: 0.8rem;">Powered by TensorFlow.js</div>
+    </div>
+
+    <!-- TensorFlow -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@2.0.0/dist/tf.min.js"></script>
+
+    <script>
+        var video = document.getElementById("video");
+        var canvas = document.getElementById("canvas");
+        var otrocanvas = document.getElementById("otrocanvas");
+        var ctx = canvas.getContext("2d");
+        var modelo = null;
+        var facingMode = "user";
+        var currentStream = null;
+
+        const COLOR_ESPERA = "#ffcc00";
+        const COLOR_OK = "#00ff00";
+        const COLOR_ERROR = "#ff0000";
+
+        // ------------------------------
+        // CARGAR MODELO
+        // ------------------------------
+        (async () => {
+            try {
+                modelo = await tf.loadLayersModel("model.json");
+                actualizarEstado("Cámara activa", COLOR_ESPERA);
+                mostrarCamara();
+            } catch (error) {
+                console.error("Error modelo:", error);
+                document.getElementById("resultado").innerText = "Error cargando modelo";
+            }
+        })();
+
+        function actualizarEstado(texto, color) {
+            document.getElementById("status-text").innerText = texto;
+            document.getElementById("status-dot").style.backgroundColor = color;
+        }
+
+        function mostrarCamara() {
+            var opciones = {
+                video: { facingMode: facingMode, width: 400, height: 400 },
+                audio: false
+            };
+
+            navigator.mediaDevices.getUserMedia(opciones)
+                .then(stream => {
+                    currentStream = stream;
+                    video.srcObject = stream;
+                    video.onloadeddata = () => {
+                        procesarCamara();
+                        predecir();
+                    };
+                })
+                .catch(err => alert("Error cámara: " + err));
+        }
+
+        function cambiarCamara() {
+            if (currentStream) currentStream.getTracks().forEach(t => t.stop());
+            facingMode = facingMode === "user" ? "environment" : "user";
+            mostrarCamara();
+        }
+
+        function procesarCamara() {
+            if (video.readyState >= 2) ctx.drawImage(video, 0, 0, 400, 400);
+            requestAnimationFrame(procesarCamara);
+        }
+
+        // ------------------------------
+        // PREDICCIÓN
+        // ------------------------------
+        async function predecir() {
+            if (modelo && video.readyState === video.HAVE_ENOUGH_DATA) {
+
+                // Reducir tamaño antes de predecir
+                var ctx2 = otrocanvas.getContext("2d");
+                ctx2.drawImage(video, 0, 0, 100, 100);
+
+                var imgData = ctx2.getImageData(0, 0, 100, 100);
+                var arr = [], fila = [];
+
+                for (let i = 0; i < imgData.data.length; i += 4) {
+                    fila.push([
+                        imgData.data[i] / 255,
+                        imgData.data[i + 1] / 255,
+                        imgData.data[i + 2] / 255
+                    ]);
+                    if (fila.length === 100) {
+                        arr.push(fila);
+                        fila = [];
+                    }
+                }
+
+                var tensor = tf.tensor4d([arr]);
+                var resultado = modelo.predict(tensor).dataSync();
+                var prob = resultado[0]; // 0–1
+
+                var resDiv = document.getElementById("resultado");
+                var barra = document.getElementById("barra-confianza");
+
+                // confianza visual
+                barra.style.width = (prob * 100) + "%";
+
+                // -------------------
+                // 💡 NUEVA LÓGICA
+                // -------------------
+                if (prob > 0.70) {
+                    // Detectó a Rodrigo
+                    resDiv.innerHTML = "¡Rodrigo Detectado! (" + (prob * 100).toFixed(1) + "%)";
+                    resDiv.style.color = "#4caf50";
+                    barra.className = "progress-bar bg-success";
+                    actualizarEstado("Identidad Confirmada", COLOR_OK);
+
+                } else {
+                    // No es Rodrigo → Desconocido
+                    resDiv.innerHTML = "Desconocido (" + (prob * 100).toFixed(1) + "%)";
+                    resDiv.style.color = "#ff5252";
+                    barra.className = "progress-bar bg-danger";
+                    actualizarEstado("Acceso Denegado", COLOR_ERROR);
+                }
+
+                tensor.dispose();
+            }
+
+            setTimeout(predecir, 100);
+        }
+    </script>
+
+</body>
+
+</html>
